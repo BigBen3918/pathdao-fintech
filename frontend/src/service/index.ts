@@ -19,9 +19,7 @@ const Login = async (param: any) => {
         let result: any = await NormalApi.post("/api/signin", param);
 
         if (result.data.token) {
-            localStorage.setItem("token", result.data.token);
-
-            return true;
+            return result.data;
         } else {
             throw new Error("Failed Login");
         }
@@ -34,13 +32,9 @@ const CheckAuth = async () => {
     try {
         let result: any = await AuthApi.post("/api/checkauth", {});
 
-        return result.data.token;
+        return result.data;
     } catch (err: any) {
-        if (err.response.status === 403) {
-            // localStorage.removeItem("token");
-            console.log(err);
-        }
-        return null;
+        return "auth_error";
     }
 };
 

@@ -1,9 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Action from "../../service";
+import { useDispatch } from "react-redux";
+import { setAuth } from "../../redux/reducers/auth";
 
 function Login() {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [userData, setUserData] = React.useState<UserDataSchema>({
         email: "",
         pass: "",
@@ -18,7 +21,10 @@ function Login() {
                 email: userData.email,
                 password: userData.pass,
             });
-            if (result) navigate("/dashboard");
+            if (result) {
+                dispatch(setAuth(result));
+                navigate("/dashboard");
+            }
         } catch (err: any) {
             console.log(err);
         }

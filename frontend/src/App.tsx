@@ -1,7 +1,9 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import WalletProvider from "./components/Wallet";
 import { AuthLayout, ProtectedLayout } from "./components/FilterLayout";
+import { tokenAsync } from "./redux/reducers/auth";
 
 // Tailwind Global StyleSheet
 import "./assets/styles/index.css";
@@ -12,6 +14,9 @@ const Dashboard = lazy(() => import("./view/pages/dashboard"));
 const NotFound = lazy(() => import("./view/404"));
 
 function App() {
+    const dispatch = useDispatch();
+    if (localStorage.getItem("token")) dispatch(tokenAsync());
+
     return (
         <WalletProvider>
             <Router>

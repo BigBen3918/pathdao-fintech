@@ -34,13 +34,17 @@ const SIGNIN = async (req: Request, res: Response) => {
 
             const token = jwt.sign(
                 { user_id: user._id, email: email.toLowerCase().trim() },
-                String(config.jwtTokenKey),
+                config.jwtTokenKey,
                 {
-                    expiresIn: "10000",
+                    algorithm: "HS256",
+                    expiresIn: "2h",
                 }
             ); // Create token
 
-            res.status(200).json({ token: token });
+            res.status(200).json({
+                token: token,
+                email: email.toLowerCase().trim(),
+            });
         } else {
             return res.status(400).send("Password or Username Is Not Correct");
         }
@@ -108,13 +112,14 @@ const PASSRESET = async (req: Request, res: Response) => {
 const CheckAuth = async (req: any, res: Response) => {
     const token = jwt.sign(
         { user_id: req.user._id, email: req.user.email },
-        String(config.jwtTokenKey),
+        config.jwtTokenKey,
         {
+            algorithm: "HS256",
             expiresIn: "2h",
         }
     ); // Update token
 
-    res.status(200).json({ token: token });
+    res.status(200).json({ token: token, email: req.user.email });
 };
 
 // Middleware
@@ -122,25 +127,28 @@ const Middleware = async (req: any, res: Response, next: NextFunction) => {
     try {
         const token = <string>req.headers["authorization"] || "";
 
-        jwt.verify(
-            token,
-            config.jwtTokenKey,
-            async (err: any, userData: any) => {
-                if (err) return res.status(403).send(err.message);
+        const payload: any = jwt.verify(token, config.jwtTokenKey);
 
-                const user: any = await Controllers.Auth.find({
-                    filter: {
-                        email: userData.email,
-                    },
-                });
-                req.user = user; // Save user data
+        const user: any = await Controllers.Auth.find({
+            filter: {
+                email: payload.email,
+            },
+        });
+        req.user = user; // Save user data
 
-                next();
-            }
-        );
+        next();
     } catch (err: any) {
         setlog("auth/Middleware", err);
-        res.status(401).send("Autherization Error");
+        if (err instanceof jwt.JsonWebTokenError) {
+            if (err.message === "jwt expired") {
+                // if the error thrown is because the JWT is unauthorized, return a 401 error
+                return res.status(403).send(err.message);
+            } else {
+                return res.status(401).send(err.message);
+            }
+        }
+
+        res.status(401).send("Server Error");
     }
 };
 
