@@ -2,24 +2,20 @@
     "compilerOptions": {
         "target": "es5",
         "lib": ["dom", "dom.iterable", "esnext"],
+        "useDefineForClassFields": true,
         "allowJs": true,
         "skipLibCheck": true,
-        "esModuleInterop": true,
+        "esModuleInterop": false,
         "allowSyntheticDefaultImports": true,
         "strict": true,
         "forceConsistentCasingInFileNames": true,
-        "noFallthroughCasesInSwitch": true,
         "module": "esnext",
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
-        "jsx": "react-jsx",
-        "incremental": true,
-        "paths": {
-            "@/*": ["./src*"]
-        }
+        "jsx": "react-jsx"
     },
-    "include": ["src"],
+    "include": ["src", "craco.config.js"],
     "exclude": ["node_modules"]
 }

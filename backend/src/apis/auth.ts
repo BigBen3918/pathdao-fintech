@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ethers } from "ethers";
 import jwt from "jsonwebtoken";
 
 import { Controllers } from "../controllers";
@@ -14,7 +15,7 @@ const SIGNIN = async (req: Request, res: Response) => {
             return res.status(400).send("Please Enter All Required Data.");
         }
 
-        const user: any = await Controllers.Auth.find({
+        const [user] = await Controllers.Auth.find({
             filter: { email: email.toLowerCase().trim() },
         });
 
@@ -35,7 +36,7 @@ const SIGNIN = async (req: Request, res: Response) => {
                 { user_id: user._id, email: email.toLowerCase().trim() },
                 String(config.jwtTokenKey),
                 {
-                    expiresIn: "2h",
+                    expiresIn: "10000",
                 }
             ); // Create token
 
@@ -51,13 +52,15 @@ const SIGNIN = async (req: Request, res: Response) => {
 
 const SIGNUP = async (req: Request, res: Response) => {
     try {
-        const { email, password }: SignUpObject = req.body;
+        const { email, password, signature }: SignUpObject = req.body;
 
         if (!(email.trim() && password.trim())) {
             return res.status(400).send("Please enter all required data.");
         } // Check user
 
-        const oldUser = await Controllers.Auth.find({
+        const account = ethers.verifyMessage(config.signatureMsg, signature);
+
+        const [oldUser] = await Controllers.Auth.find({
             filter: { email: email.toLowerCase().trim() },
         });
 
@@ -70,7 +73,7 @@ const SIGNUP = async (req: Request, res: Response) => {
         const result = await Controllers.Auth.create({
             email: email.toLowerCase().trim(),
             password: encryptedPassword,
-            address: "",
+            address: account,
         }); // Save user data
 
         if (result) {
@@ -102,6 +105,18 @@ const PASSRESET = async (req: Request, res: Response) => {
     }
 };
 
+const CheckAuth = async (req: any, res: Response) => {
+    const token = jwt.sign(
+        { user_id: req.user._id, email: req.user.email },
+        String(config.jwtTokenKey),
+        {
+            expiresIn: "2h",
+        }
+    ); // Update token
+
+    res.status(200).json({ token: token });
+};
+
 // Middleware
 const Middleware = async (req: any, res: Response, next: NextFunction) => {
     try {
@@ -109,9 +124,9 @@ const Middleware = async (req: any, res: Response, next: NextFunction) => {
 
         jwt.verify(
             token,
-            String(config.jwtTokenKey),
+            config.jwtTokenKey,
             async (err: any, userData: any) => {
-                if (err) return res.status(403).send();
+                if (err) return res.status(403).send(err.message);
 
                 const user: any = await Controllers.Auth.find({
                     filter: {
@@ -134,4 +149,5 @@ export const Auth = {
     SIGNUP,
     PASSRESET,
     Middleware,
+    CheckAuth,
 };

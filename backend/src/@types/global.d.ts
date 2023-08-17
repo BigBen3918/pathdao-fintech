@@ -7,6 +7,7 @@ declare interface SignInObject {
 declare interface SignUpObject {
     email: string;
     password: string;
+    signature: string;
 }
 
 declare interface UserDataObject {
